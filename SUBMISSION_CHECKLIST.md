@@ -82,28 +82,31 @@ them is a one-command change if you prefer.
 
 **Deployed and verified at <https://losslab-xi.vercel.app>.**
 
+Deployed with the Vercel CLI (resolves to **64.2.0** with no global install), authenticating
+interactively in a browser — no token was requested or stored:
+
 ```bash
 cd /Users/radhikaverma/LossLab
-npx vercel@latest login          # interactive, browser-based — run this yourself
+npx vercel@latest login          # interactive, browser-based
 npx vercel@latest link           # first run only: create or select the project
 npx vercel@latest --prod         # deploy from this directory
 ```
 
-Verified for the upgrade: the Vercel CLI resolves to **64.2.0** without a global install, a clean
-`npm ci` installs the lockfile exactly, and `next build` succeeds from that lockfile. Next.js App
-Router is auto-detected; **no `vercel.json` is required**, the three route handlers deploy as
-serverless functions, and the app needs **no environment variables** — there is no database, no auth
-provider and no third-party API.
+Next.js App Router is auto-detected; **no `vercel.json` is required**, the three route handlers
+deploy as serverless functions, and the app needs **no environment variables** — there is no database,
+no auth provider and no third-party API. A clean `npm ci` installs the lockfile exactly, and
+`next build` succeeds from it.
 
-After the deploy, verify the public app end to end with the same suite used locally:
+The public app is verified end to end with the same suite used locally:
 
 ```bash
-LOSSLAB_BASE_URL=https://<project>.vercel.app npx playwright test
+LOSSLAB_BASE_URL=https://losslab-xi.vercel.app npx playwright test
 ```
 
-That path is pre-flighted: pointing the suite at an externally-started server already passes 3/3
-without Playwright spawning a local one. The only assertion that cannot run before the deploy is the
-`https:` protocol check, which by design only fires against an `https://` base.
+That external-base path was pre-flighted before the deploy: pointing the suite at a server started
+outside Playwright already passed 3/3 without Playwright spawning a local one. The one assertion that
+could not run earlier is the `https:` protocol check, which by design only fires against an
+`https://` base — it now runs.
 
 ### Deployed verification — <https://losslab-xi.vercel.app>
 

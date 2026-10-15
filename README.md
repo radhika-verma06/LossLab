@@ -225,7 +225,7 @@ Tests cover profile/fixture totals, cent multiplication, rule IDs, passing cases
 ```sh
 npx playwright test
 # or, against the deployed build:
-LOSSLAB_BASE_URL=https://<project>.vercel.app npx playwright test
+LOSSLAB_BASE_URL=https://losslab-xi.vercel.app npx playwright test
 ```
 
 ## Deployment
