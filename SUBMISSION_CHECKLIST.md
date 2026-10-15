@@ -113,6 +113,11 @@ could not run earlier is the `https:` protocol check, which by design only fires
 
 ### Deployed verification — <https://losslab-xi.vercel.app>
 
+The deployed build's **application code matches HEAD**. The last commit touching anything a Next
+build consumes is `122ec4e`; everything committed since changes only markdown, `.gitignore`,
+`.vercelignore`, test files and the unused Flask draft template, none of which affects the built
+artifact. A redeploy is therefore optional and would not change the served app.
+
 | Check | Result |
 |---|---|
 | Browser suite over HTTPS | **3 passed** — `LOSSLAB_BASE_URL=https://losslab-xi.vercel.app npx playwright test` |
