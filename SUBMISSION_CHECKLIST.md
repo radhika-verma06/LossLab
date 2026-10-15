@@ -23,7 +23,7 @@ clean `npm ci` install, after the last source change.
 | Full-tree audit | `npm audit` | 17 findings (6 moderate, 9 high, 2 critical) — build/test tooling only, never shipped |
 | Security headers | `curl -D -` on `next start` | all 7 headers present |
 | `x-powered-by` | `curl -D -` | absent |
-| Image optimizer | probe `/_next/image` | 404, no optimized payload |
+| Image optimizer | probe `/_next/image` | no optimized payload on either host — 404 locally, 400 `INVALID_IMAGE_OPTIMIZE_REQUEST` at Vercel's edge; the app has 0 `next/image` usages |
 | Initial JS payload | 7 chunks served from `next start`, gzip-transfer measured | 654 kB decoded / **199 kB transferred** |
 | UI type floor | rendered-DOM audit, 4 screens | minimum 11 px; 0 text nodes below 10 px |
 | No WebGL | rendered-DOM audit | 0 `<canvas>` elements |
@@ -80,7 +80,7 @@ them is a one-command change if you prefer.
 
 ## 5. Deployment
 
-Everything needed is in place; the only step that requires you is authentication.
+**Deployed and verified at <https://losslab-xi.vercel.app>.**
 
 ```bash
 cd /Users/radhikaverma/LossLab
@@ -105,15 +105,29 @@ That path is pre-flighted: pointing the suite at an externally-started server al
 without Playwright spawning a local one. The only assertion that cannot run before the deploy is the
 `https:` protocol check, which by design only fires against an `https://` base.
 
-- [ ] Authenticate the Vercel CLI (your browser session; no token is requested or stored here).
-- [ ] Deploy to production and capture the HTTPS URL.
-- [ ] Run the command above against the deployed URL — same 3 tests, now over HTTPS.
-- [ ] Only then describe the project as deployed.
+### Deployed verification — <https://losslab-xi.vercel.app>
+
+| Check | Result |
+|---|---|
+| Browser suite over HTTPS | **3 passed** — `LOSSLAB_BASE_URL=https://losslab-xi.vercel.app npx playwright test` |
+| Transport | `http://` → **308** → `https://`; the HTTPS URL returns 200 |
+| Security headers | all 7 present on the deployed response; `x-powered-by` absent (`server: Vercel`) |
+| API surface | `GET /api/v1/agents` → 200; `GET /api/v1/reports/not-a-run` → 400 |
+| Deployed build identity | Turbopack runtime chunk served and the “Modeled monthly exposure” copy present, so the deployment is the **Next 16 release**, not the Next 14 fallback |
+| Task 1 + task 2 copy on the live host | `Modeled monthly exposure $3,120`; `Original risk · Critical` and `Mitigated replay passed` both present after the safeguard runs |
+| UI audit on the deployed host | min font 11 px, 0 nodes < 10 px, 0 canvases, 0 horizontal overflow at 1440 and 390 |
+| Severity palette in deployed CSS | badge renders `#C7534B` on `#FBEDEC` — the Tailwind `content`-glob fix survives Vercel's CSS pipeline |
+| Runtime cleanliness | 0 CSP violations, 0 console errors, 0 page errors, 0 long tasks |
+
+- [x] Authenticate the Vercel CLI (browser session; no token was requested or stored).
+- [x] Deploy to production and capture the HTTPS URL.
+- [x] Run the suite above against the deployed URL — same 3 tests, over HTTPS.
+- [x] The project is deployed.
 
 ## 6. Submission artefacts to hand in
 
 - [ ] Source repository (branch `next-16-security-upgrade`).
-- [ ] Deployed HTTPS URL.
+- [x] Deployed HTTPS URL — <https://losslab-xi.vercel.app>.
 - [ ] `DEMO_SCRIPT.md` — recording plan and spoken script.
 - [ ] `SECURITY_FINDINGS.md` — dependency audit and patch record.
 - [ ] `README.md` — product and architecture overview.

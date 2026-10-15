@@ -15,9 +15,10 @@ npm run build && npm run start      # http://localhost:3000
 `npm run dev` also works. No credentials, network integration or database are required. No WebGL is
 required. **Keep the `Synthetic demo` indicator in the sidebar in frame for the entire demo.**
 
-The deployed build behaves identically — point the same suite at it with
-`LOSSLAB_BASE_URL=https://<project>.vercel.app npx playwright test`, and record the demo from
-whichever URL you are submitting.
+The deployed build is live at **<https://losslab-xi.vercel.app>** and behaves identically to the
+local production build: the same three browser tests pass against it with
+`LOSSLAB_BASE_URL=https://losslab-xi.vercel.app npx playwright test`. Record the demo from whichever
+URL you are submitting.
 
 ## 0:00–0:35 — Problem
 
