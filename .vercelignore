@@ -7,8 +7,23 @@ coverage
 test-results
 playwright-report
 .audit-shots
+.shots
 *.tsbuildinfo
 *.log
 .DS_Store
 .env
 .env.*
+
+# Obsolete Flask draft. Not imported by the Next.js app, has no runtime dependency on it,
+# and `app.py` does not even start. Excluded so the upload contains the Next.js app only.
+app.py
+risk_engine.py
+templates
+LossLab
+
+# Test and design sources are not build inputs for the deployment.
+tests
+docs
+supabase
+playwright.config.ts
+vitest.config.ts

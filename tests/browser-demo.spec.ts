@@ -1,6 +1,8 @@
 import { expect, test } from "@playwright/test";
 
-const BASE = "http://127.0.0.1:3322";
+// Points at a local production server by default; set LOSSLAB_BASE_URL to run the identical
+// assertions against a deployment, e.g. LOSSLAB_BASE_URL=https://<project>.vercel.app npx playwright test
+const BASE = process.env.LOSSLAB_BASE_URL ?? "http://127.0.0.1:3322";
 
 const nav = (page: import("@playwright/test").Page, label: string) =>
   page.locator('nav[aria-label="Primary"] button', { hasText: label }).first().click();
@@ -157,5 +159,48 @@ test("run tests, reports and integrations all read the same evaluated run", asyn
   await page.getByTestId("reset-test").click();
   await expect(page.getByTestId("metric-exposure")).toHaveText("$3,120");
 
+  expect(errors).toEqual([]);
+});
+
+test("served build answers the documented surface with security headers and a clean CSP", async ({ page, request }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  page.on("console", (message) => { if (message.type() === "error") errors.push(message.text()); });
+  await page.addInitScript(() => {
+    (window as unknown as { __csp: string[] }).__csp = [];
+    document.addEventListener("securitypolicyviolation", (event) => {
+      (window as unknown as { __csp: string[] }).__csp.push(`${event.violatedDirective} ${event.blockedURI}`);
+    });
+  });
+
+  // Every response carries the header set declared in next.config.mjs.
+  const documentResponse = await request.get(`${BASE}/`);
+  expect(documentResponse.ok()).toBe(true);
+  for (const header of [
+    "strict-transport-security",
+    "content-security-policy",
+    "x-content-type-options",
+    "x-frame-options",
+    "referrer-policy",
+    "permissions-policy",
+    "cross-origin-opener-policy",
+  ]) {
+    expect(documentResponse.headers()[header], `missing ${header}`).toBeTruthy();
+  }
+  expect(documentResponse.headers()["x-powered-by"] ?? "").not.toMatch(/next\.?js/i);
+
+  // The three route handlers answer on whatever host is under test.
+  const agents = await request.get(`${BASE}/api/v1/agents`);
+  expect(agents.ok()).toBe(true);
+  expect((await agents.json()).data).toHaveLength(3);
+  expect((await request.get(`${BASE}/api/v1/reports/not-a-run`)).status()).toBe(400);
+
+  // The page still renders and stays free of CSP violations and console errors.
+  await page.goto(`${BASE}/`);
+  await page.waitForFunction(() => document.documentElement.dataset.losslabHydrated === "true");
+  await expect(page.getByRole("heading", { name: "Agent safety testing" })).toBeVisible();
+  if (BASE.startsWith("https://")) expect(new URL(page.url()).protocol).toBe("https:");
+  const violations = await page.evaluate(() => (window as unknown as { __csp: string[] }).__csp);
+  expect(violations).toEqual([]);
   expect(errors).toEqual([]);
 });
