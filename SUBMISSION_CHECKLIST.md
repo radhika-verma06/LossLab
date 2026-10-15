@@ -119,6 +119,8 @@ could not run earlier is the `https:` protocol check, which by design only fires
 | Transport | `http://` → **308** → `https://`; the HTTPS URL returns 200 |
 | Security headers | all 7 present on the deployed response; `x-powered-by` absent (`server: Vercel`) |
 | API surface | `GET /api/v1/agents` → 200; `GET /api/v1/reports/not-a-run` → 400 |
+| Deployed engine matches the local engine | `POST /api/v1/runs` for `skybridge`/seed 241 → **201**, `runId LL-D5FFC54B`, `monthlyExposureCents 1_243_700`, 40 events, 14 failing / 26 passing — **identical to the same call evaluated in-process locally** |
+| Stateless serverless instances | `GET /api/v1/reports/LL-D5FFC54B` returned **200 on 3/3** attempts, so the deterministic run-ID fallback covers cold or multiple instances rather than relying on in-memory state |
 | Deployed build identity | Turbopack runtime chunk served and the “Modeled monthly exposure” copy present, so the deployment is the **Next 16 release**, not the Next 14 fallback |
 | Task 1 + task 2 copy on the live host | `Modeled monthly exposure $3,120`; `Original risk · Critical` and `Mitigated replay passed` both present after the safeguard runs |
 | UI audit on the deployed host | min font 11 px, 0 nodes < 10 px, 0 canvases, 0 horizontal overflow at 1440 and 390 |
