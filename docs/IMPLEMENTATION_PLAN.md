@@ -1,6 +1,10 @@
 # LossLab Implementation Plan
 
-> **For agentic workers:** Execute inline, in order. Each phase ends with its focused verification.
+> **Historical document.** This records the original build plan for release preparation and is
+> kept for provenance. It is superseded by the shipped code: the Three.js / react-three-fiber
+> visualization and its dependencies were removed, and the Run screen now renders a 2D SVG finding
+> map. See `README.md` for the current feature list and `SECURITY_FINDINGS.md` for the current
+> dependency set.
 
 **Goal:** Build a locally functional, auditable AI-agent risk-engineering MVP with deterministic synthetic runs, guardrail replay, report, API, and cinematic visualization.
 

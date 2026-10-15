@@ -21,7 +21,7 @@ export const GUARDRAILS: readonly GuardrailDefinition[] = Object.freeze([
 
 export const GUARDRAIL_IDS: readonly GuardrailId[] = Object.freeze(GUARDRAILS.map((control) => control.id));
 
-/** Six explicit controls model a 77.96% reduction on the SkyBridge synthetic fixture set. */
+/** These five explicit controls model a 77.96% reduction on the SkyBridge synthetic fixture set. */
 export const PROPOSED_GUARDRAILS: readonly GuardrailId[] = Object.freeze([
   "transaction-idempotency",
   "trusted-source-boundary",

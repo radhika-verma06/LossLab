@@ -35,7 +35,7 @@ These are target hypotheses, not claimed customers.
 - Guardrail comparison replays the same underlying structured traces with alternate evaluator controls. It only reduces exposure when the reevaluated unsafe actions are intercepted.
 - Integer-cent monthly and annual amounts, documented incident scaling and baseline/prevented/residual reconciliation.
 - Interactive volume sensitivity (0.5×–2×), clickable evidence and downloadable JSON report.
-- A client-only WebGL Core with instanced deterministic particles and finding markers, plus reduced-motion and accessible SVG fallback.
+- A 2D SVG finding map that plots every evaluated violation around the synthetic agent core. Marker colour and position come from the local evaluator result; no WebGL or animation is used.
 - Zod-validated local API and TypeScript SDK facade. No keys, external service calls or database are required for the demo.
 - Supabase-compatible SQL schema and seed example for future production persistence; neither is used by the demo.
 

@@ -1,0 +1,14 @@
+# Upload only what the Next.js build needs.
+node_modules
+.next
+.next-playwright
+venv
+coverage
+test-results
+playwright-report
+.audit-shots
+*.tsbuildinfo
+*.log
+.DS_Store
+.env
+.env.*

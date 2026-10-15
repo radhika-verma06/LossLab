@@ -11,7 +11,7 @@ button { -webkit-tap-highlight-color: transparent; }
 button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
 ::selection { color: var(--void); background: var(--cyan); }
 .font-mono, .metric, .micro, code, pre, time { font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace; font-variant-numeric: tabular-nums; }
-.micro { font-size: 9px; letter-spacing: .16em; text-transform: uppercase; }
+.micro { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; }
 .panel-grid { background-image: linear-gradient(rgba(55,240,208,.023) 1px, transparent 1px), linear-gradient(90deg, rgba(55,240,208,.023) 1px, transparent 1px); background-size: 32px 32px; }
 .hairline { border: 1px solid var(--line); }
 .status-dot { box-shadow: 0 0 12px currentColor; }
