@@ -32,9 +32,9 @@ describe("local synthetic API", () => {
   it("returns a deterministic report by run ID and rejects malformed identifiers", async () => {
     const result = runRiskEngine({ profileId: "skybridge" }); registerReport(result);
     const request = new NextRequest("http://localhost/api/v1/reports/" + result.runId);
-    const good = await readReport(request, { params: { runId: result.runId } });
+    const good = await readReport(request, { params: Promise.resolve({ runId: result.runId }) });
     expect(good.status).toBe(200); expect((await good.json()).data.runId).toBe(result.runId);
-    const bad = await readReport(request, { params: { runId: "not-a-run" } });
+    const bad = await readReport(request, { params: Promise.resolve({ runId: "not-a-run" }) });
     expect(bad.status).toBe(400);
   });
 });
