@@ -1,0 +1,32 @@
+-- Example seed for a local Supabase sandbox only. Replace auth user references after provisioning a test account.
+-- Synthetic profiles are maintained in lib/data.ts; this SQL is architecture documentation.
+-- No production org IDs or credentials belong in this file.
+
+-- Example structure (run only after inserting an authenticated user into auth.users):
+-- insert into public.organizations (id, name)
+-- values ('f3b51f31-78e6-45d0-a312-3a2d406f9001', 'LossLab Demonstration Organization');
+--
+-- insert into public.organization_members (organization_id, user_id, role)
+-- select 'f3b51f31-78e6-45d0-a312-3a2d406f9001', id, 'owner'
+-- from auth.users where email = 'local-owner@example.invalid';
+--
+-- insert into public.agents (id, organization_id, name, adapter_kind, description)
+-- values (
+--   'a4e3fae7-1d35-49f6-8f1c-6715d9c3e202',
+--   'f3b51f31-78e6-45d0-a312-3a2d406f9001',
+--   'Synthetic Airline Refund Agent',
+--   'synthetic_fixture',
+--   'Review-only clone of the SkyBridge synthetic demonstration profile.'
+-- );
+--
+-- insert into public.policy_sets (id, organization_id, agent_id, name, version, state, published_at, created_by)
+-- select
+--   'b66b650b-148f-4aaf-8625-e925a56e4503',
+--   'f3b51f31-78e6-45d0-a312-3a2d406f9001',
+--   'a4e3fae7-1d35-49f6-8f1c-6715d9c3e202',
+--   'Refund Controls', 1, 'published', now(), member.user_id
+-- from public.organization_members member
+-- where member.organization_id = 'f3b51f31-78e6-45d0-a312-3a2d406f9001'
+--   and member.role = 'owner';
+--
+-- Policy definitions are intentionally versioned and immutable after publication.

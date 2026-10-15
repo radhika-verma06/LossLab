@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LossLab — AI Agent Safety Testing</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #F8F9F7;
+            --surface-color: #FFFFFF;
+            --heading-color: #24313A;
+            --success-color: #16877D;
+            --error-color: #C75C52;
+            --border-color: #E0E0E0;
+            --text-color: #333333;
+            --muted-color: #666666;
+            --radius: 8px;
+            --shadow: 0 1px 3px rgba(0,0,0,0.1);
+            --transition: 0.2s ease;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 24px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1, h2, h3 {
+            color: var(--heading-color);
+            margin-bottom: 16px;
+        }
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+        }
+        h2 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+        h3 {
+            font-size: 20px;
+            font-weight: 600;
+        }
+        p {
+            margin-bottom: 16px;
+            color: var(--muted-color);
+        }
+        .card {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+        }
+        .card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .card h3 {
+            margin-top: 0;
+        }
+        .button {
+            display: inline-block;
+            background-color: var(--heading-color);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: var(--transition);
+        }
+        .button:hover {
+            background-color: #1c262e;
+        }
+        .button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .button-primary {
+            background-color: var(--heading-color);
+        }
+        .button-success {
+            background-color: var(--success-color);
+        }
+        .button-danger {
+            background-color: var(--error-color);
+        }
+        .button-outline {
+            background-color: transparent;
+            color: var(--heading-color);
+            border: 2px solid var(--heading-color);
+        }
+        .button-outline:hover {
+            background-color: rgba(36,49,58,0.1);
+        }
+        .progress {
+            height: 4px;
+            background-color: var(--border-color);
+            border-radius: 2px;
+            overflow: hidden;
+            margin: 16px 0;
+        }
+        .progress-bar {
+            height: 100%;
+            background-color: var(--heading-color);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        .result-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .result-item:last-child {
+            border-bottom: none;
+        }
+        .result-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+        .result-icon.success {
+            background-color: rgba(22,135,125,0.1);
+            color: var(--success-color);
+        }
+        .result-icon.error {
+            background-color: rgba(199,92,82,0.1);
+            color: var(--error-color);
+        }
+        .result-icon::before {
+            font-size: 16px;
+        }
+        .result-text {
+            flex: 1;
+        }
+        .result-label {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .result-value {
+            font-variant-numeric: tabular-nums;
+        }
+        .comparison {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 24px;
+            margin: 24px 0;
+        }
+        .comparison-card {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 24px;
+            text-align: center;
+        }
+        .comparison-card h4 {
+            margin-bottom: 12px;
+            color: var(--muted-color);
+            font-size: 16px;
+        }
+        .comparison-card .amount {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--heading-color);
+            font-variant-numeric: tabular-nums;
+            margin-bottom: 8px;
+        }
+        .comparison-card .result-text {
+            font-size: 16px;
+            font-weight: 600;
+        }
+        .details-toggle {
+            background-color: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 24px;
+            margin-top: 32px;
+        }
+        .details-toggle button {
+            width: 100%;
+            text-align: left;
+            padding: 16px;
+            background-color: transparent;
+            border: none;
+            color: var(--heading-color);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .details-content {
+            display: none;
+            margin-top: 16px;
+            padding: 16px;
+            background-color: #fafafa;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            font-family: monospace;
+            font-size: 14px;
+            color: var(--muted-color);
+        }
+        .details-content pre {
+            background: #fff;
+            padding: 12px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        .hidden {
+            display: none;
+        }
+        .tabular-nums {
+            font-variant-numeric: tabular-nums;
+        }
+        @media (max-width: 600px) {
+            body {
+                padding: 16px;
+            }
+            h1 {
+                font-size: 24px;
+            }
+            .comparison {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="app">
+            <!-- Choose Agent Screen -->
+            <div id="choose-agent-screen">
+                <h1>Find costly AI mistakes before your customers do.</h1>
+                <p>LossLab simulates AI agent actions against your business policies to uncover costly errors and test safeguards before they impact real customers.</p>
+                <div class="cards" id="agent-cards">
+                    <!-- Agent cards will be injected here -->
+                </div>
+                <button class="button button-primary" id="run-test-btn" disabled>Run safety test</button>
+            </div>
+
+            <!-- Running Test Screen -->
+            <div id="running-test-screen" class="hidden">
+                <h2>Running safety test...</h2>
+                <div class="progress">
+                    <div class="progress-bar" id="progress-bar"></div>
+                </div>
+                <p>Evaluating agent actions against business policies.</p>
+            </div>
+
+            <!-- Test Results Screen -->
+            <div id="test-results-screen" class="hidden">
+                <h2>Test Results</h2>
+                <div id="results-list"></div>
+                <button class="button button-primary" id="apply-safeguard-btn" hidden>Apply safeguard and retest</button>
+            </div>
+
+            <!-- Before/After Comparison Screen -->
+            <div id="comparison-screen" class="hidden">
+                <h2>Before and After Safeguards</h2>
+                <div class="comparison" id="comparison-content"></div>
+                <button class="button button-outline" id="reset-btn">Test another agent</button>
+            </div>
+
+            <!-- Developer Details -->
+            <div class="details-toggle">
+                <button id="details-toggle-btn">Developer details ▾</button>
+                <div class="details-content hidden" id="details-content">
+                    <h3>API Endpoints</h3>
+                    <pre><code>GET /api/v1/agents
+POST /api/v1/runs
+GET /api/v1/reports/:run_id</code></pre>
+                    <h3>Current Agent Trace</h3>
+                    <pre><code id="trace-json"></code></pre>
+                    <h3>Policy Rules</h3>
+                    <pre><code id="policy-json"></code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let state = {
+            agents: [],
+            selectedAgent: null,
+            runWithoutGuardrails: null,
+            runWithGuardrails: null
+        };
+
+        // DOM elements
+        const agentCardsEl = document.getElementById('agent-cards');
+        const runTestBtn = document.getElementById('run-test-btn');
+        const chooseAgentScreen = document.getElementById('choose-agent-screen');
+        const runningTestScreen = document.getElementById('running-test-screen');
+        const testResultsScreen = document.getElementById('test-results-screen');
+        const resultsListEl = document.getElementById('results-list');
+        const applySafeguardBtn = document.getElementById('apply-safeguard-btn');
+        const comparisonScreen = document.getElementById('comparison-screen');
+        const comparisonContentEl = document.getElementById('comparison-content');
+        const resetBtn = document.getElementById('reset-btn');
+        const progressBarEl = document.getElementById('progress-bar');
+        const detailsToggleBtn = document.getElementById('details-toggle-btn');
+        const detailsContentEl = document.getElementById('details-content');
+        const traceJsonEl = document.getElementById('trace-json');
+        const policyJsonEl = document.getElementById('policy-json');
+
+        // Initialize
+        init();
+
+        async function init() {
+            try {
+                const response = await fetch('/api/v1/agents');
+                state.agents = await response.json();
+                renderAgentCards();
+            } catch (error) {
+                console.error('Failed to fetch agents:', error);
+                showError('Could not load agent types. Please try again later.');
+            }
+        }
+
+        function renderAgentCards() {
+            agentCardsEl.innerHTML = '';
+            state.agents.forEach(agent => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <h3>${agent.name}</h3>
+                    <p>${getAgentDescription(agent.id)}</p>
+                ';
+                card.addEventListener('click', () => selectAgent(agent));
+                agentCardsEl.appendChild(card);
+            });
+        }
+
+        function getAgentDescription(agentId) {
+            switch (agentId) {
+                case 'airline_refund': return 'Tests flight refund agents for duplicate payments and approval limit violations.';
+                case 'saas_discount': return 'Tests discount agents for excessive promotional offers that violate pricing policies.';
+                case 'fraud_operations': return 'Tests fraud detection agents for missing required checks on high-value transactions.';
+                default: return 'Tests agent actions against business policies.';
+            }
+        }
+
+        function selectAgent(agent) {
+            // Clear previous selection
+            document.querySelectorAll('.card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            // Select this card
+            event.currentTarget.classList.add('selected');
+            state.selectedAgent = agent;
+            runTestBtn.disabled = false;
+        }
+
+        runTestBtn.addEventListener('click', async () => {
+            if (!state.selectedAgent) return;
+            await runTestWithoutGuardrails();
+        });
+
+        async function runTestWithoutGuardrails() {
+            showScreen(runningTestScreen);
+            startProgress();
+
+            try {
+                const response = await fetch('/api/v1/runs', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        agent_type: state.selectedAgent.id,
+                        apply_guardrails: false
+                    })
+                });
+
+                const result = await response.json();
+                state.runWithoutGuardrails = {
+                    runId: result.run_id,
+                    summary: result.summary
+                };
+
+                // Fetch detailed report
+                const reportResponse = await fetch(`/api/v1/reports/${state.runWithoutGuardrails.runId}`);
+                state.runWithoutGuardrails.report = await reportResponse.json();
+
+                stopProgress();
+                showTestResults();
+            } catch (error) {
+                console.error('Test failed:', error);
+                stopProgress();
+                showError('Test execution failed. Please try again.');
+            }
+        });
+
+        function showTestResults() {
+            showScreen(testResultsScreen);
+            resultsListEl.innerHTML = '';
+
+            // Populate results from the report
+            const report = state.runWithoutGuardrails.report;
+            if (!report) return;
+
+            // Show each action result
+            report.actions.forEach((action, index) => {
+                // Check if this action has violations
+                const actionViolations = report.violations.filter(v => 
+                    v.action.transaction_id === action.transaction_id && 
+                    v.action.amount_cents === action.amount_cents
+                );
+
+                const isBlocked = report.blocked_actions.some(b => 
+                    b.transaction_id === action.transaction_id && 
+                    b.amount_cents === action.amount_cents
+                );
+
+                const item = document.createElement('div');
+                item.className = 'result-item';
+
+                if (isBlocked) {
+                    item.innerHTML = `
+                        <div class="result-icon error" title="Blocked by safeguard">✕</div>
+                        <div class="result-text">
+                            <div class="result-label">Action ${index + 1}</div>
+                            <div class="result-value">${formatAction(action)}</div>
+                        </div>
+                    ';
+                } else if (actionViolations.length > 0) {
+                    item.innerHTML = `
+                        <div class="result-icon error" title="Policy violation">✕</div>
+                        <div class="result-text">
+                            <div class="result-label">Action ${index + 1}</div>
+                            <div class="result-value">${formatAction(action)}</div>
+                            <div class="result-value" style="color: var(--error-color); font-size: 14px;">
+                                ${actionViolations.map(v => v.description).join(' • ')}
+                            </div>
+                        </div>
+                    ';
+                } else {
+                    item.innerHTML = `
+                        <div class="result-icon success" title="Passed">✓</div>
+                        <div class="result-text">
+                            <div class="result-label">Action ${index + 1}</div>
+                            <div class="result-value">${formatAction(action)}</div>
+                        </div>
+                    ';
+                }
+
+                resultsListEl.appendChild(item);
+            });
+
+            // Show total exposure
+            const exposureItem = document.createElement('div');
+            exposureItem.className = 'result-item';
+            exposureItem.innerHTML = `
+                <div class="result-icon" style="background: var(--error-color); color: white;">!</div>
+                <div class="result-text">
+                    <div class="result-label">Total exposure in this test</div>
+                    <div class="result-value tabular-nums">$${(state.runWithoutGuardrails.report.total_exposure_cents / 100).toFixed(2)}</div>
+                </div>
+            ';
+            resultsListEl.appendChild(exposureItem);
+
+            // Show the apply safeguard button
+            applySafeguardBtn.hidden = false;
+            applySafeguardBtn.onclick = applySafeguardAndRetest;
+
+            // Populate developer details
+            traceJsonEl.textContent = JSON.stringify(report.actions, null, 2);
+            policyJsonEl.textContent = JSON.stringify(state.selectedAgent.id, null, 2); // Simplified
+        }
+
+        function formatAction(action) {
+            const amount = (action.amount_cents / 100).toFixed(2);
+            switch (action.action_type) {
+                case 'refund': return `Refund of $${amount} for transaction ${action.transaction_id}`;
+                case 'discount': return `Discount of $${amount} applied to ${action.transaction_id}`;
+                case 'fraud_check': return `Fraud check performed on ${action.transaction_id}`;
+                default: return `${action.action_type} on ${action.transaction_id}`;
+            }
+        }
+
+        async function applySafeguardAndRetest() {
+            showScreen(runningTestScreen);
+            startProgress();
+
+            try {
+                const response = await fetch('/api/v1/runs', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        agent_type: state.selectedAgent.id,
+                        apply_guardrails: true
+                    })
+                });
+
+                const result = await response.json();
+                state.runWithGuardrails = {
+                    runId: result.run_id,
+                    summary: result.summary
+                };
+
+                // Fetch detailed report
+                const reportResponse = await fetch(`/api/v1/reports/${state.runWithGuardrails.runId}`);
+                state.runWithGuardrails.report = await reportResponse.json();
+
+                stopProgress();
+                showComparison();
+            } catch (error) {
+                console.error('Safeguard test failed:', error);
+                stopProgress();
+                showError('Safeguard test execution failed. Please try again.');
+            }
+        }
+
+        function showComparison() {
+            showScreen(comparisonScreen);
+            comparisonContentEl.innerHTML = '';
+
+            const beforeExposure = state.runWithoutGuardrails.report.total_exposure_cents / 100;
+            const afterExposure = state.runWithGuardrails.report.total_exposure_cents / 100;
+            const preventedExposure = state.runWithGuardrails.report.prevented_exposure_cents / 100;
+
+            // Before card
+            const beforeCard = document.createElement('div');
+            beforeCard.className = 'comparison-card';
+            beforeCard.innerHTML = `
+                <h4>Without safeguards</h4>
+                <div class="amount tabular-nums">$${beforeExposure.toFixed(2)}</div>
+                <div class="result-text">Extra refunds allowed</div>
+            ';
+            comparisonContentEl.appendChild(beforeCard);
+
+            // After card
+            const afterCard = document.createElement('div');
+            afterCard.className = 'comparison-card';
+            afterCard.innerHTML = `
+                <h4>With safeguards</h4>
+                <div class="amount tabular-nums">$${afterExposure.toFixed(2)}</div>
+                <div class="result-text">Extra refunds allowed</div>
+            ';
+            comparisonContentEl.appendChild(afterCard);
+
+            // Prevented card
+            const preventedCard = document.createElement('div');
+            preventedCard.className = 'comparison-card';
+            preventedCard.innerHTML = `
+                <h4>Safeguard effectiveness</h4>
+                <div class="amount tabular-nums">$${preventedExposure.toFixed(2)}</div>
+                <div class="result-text">Extra refunds blocked</div>
+            ';
+            comparisonContentEl.appendChild(preventedCard);
+        }
+
+        function showScreen(screenToShow) {
+            // Hide all screens
+            document.querySelectorAll('#choose-agent-screen, #running-test-screen, #test-results-screen, #comparison-screen').forEach(screen => {
+                screen.classList.add('hidden');
+            });
+            // Show the requested screen
+            screenToShow.classList.remove('hidden');
+        }
+
+        function startProgress() {
+            progressBarEl.style.width = '0%';
+            let width = 0;
+            const interval = setInterval(() => {
+                if (width >= 100) {
+                    clearInterval(interval);
+                } else {
+                    width += Math.random() * 10;
+                    if (width > 100) width = 100;
+                    progressBarEl.style.width = width + '%';
+                }
+            }, 100);
+            // Store interval to stop later
+            state.progressInterval = interval;
+        }
+
+        function stopProgress() {
+            if (state.progressInterval) {
+                clearInterval(state.progressInterval);
+                state.progressInterval = null;
+            }
+            progressBarEl.style.width = '100%';
+        }
+
+        function showError(message) {
+            // Simple error display - in production would be better
+            alert(message);
+            showScreen(chooseAgentScreen);
+            stopProgress();
+        }
+
+        resetBtn.addEventListener('click', () => {
+            // Reset state
+            state = {
+                agents: state.agents, // Keep the fetched agents
+                selectedAgent: null,
+                runWithoutGuardrails: null,
+                runWithGuardrails: null
+            };
+            agentCardsEl.innerHTML = '';
+            renderAgentCards();
+            runTestBtn.disabled = true;
+            showScreen(chooseAgentScreen);
+        });
+
+        detailsToggleBtn.addEventListener('click', () => {
+            detailsContentEl.classList.toggle('hidden');
+            // Toggle arrow
+            if (detailsContentEl.classList.contains('hidden')) {
+                detailsToggleBtn.innerHTML = 'Developer details ▾';
+            } else {
+                detailsToggleBtn.innerHTML = 'Developer details ▴';
+            }
+        });
+    </script>
+</body>
+</html>

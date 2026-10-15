@@ -1,0 +1,31 @@
+# dependencies
+node_modules/
+
+# next.js build output
+.next/
+.next-playwright/
+out/
+
+# test + coverage artifacts
+coverage/
+test-results/
+playwright-report/
+.audit-shots/
+
+# typescript incremental cache
+*.tsbuildinfo
+
+# python virtualenv / bytecode (obsolete Flask draft)
+venv/
+__pycache__/
+*.py[cod]
+
+# local logs
+*.log
+
+# secrets and local env
+.env*
+!.env.example
+
+# os cruft
+.DS_Store

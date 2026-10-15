@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { color-scheme: dark; --void: #0a0f12; --panel: #10181d; --elevated: #142027; --line: #23363b; --ink: #e8f2f1; --muted: #738b90; --cyan: #37f0d0; --red: #ff4545; --amber: #ffbf5b; }
+* { box-sizing: border-box; }
+html { background: var(--void); }
+body { min-height: 100vh; margin: 0; background: var(--void); color: var(--ink); font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-feature-settings: "ss01" on; }
+button, input, select { font: inherit; }
+button { -webkit-tap-highlight-color: transparent; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
+::selection { color: var(--void); background: var(--cyan); }
+.font-mono, .metric, .micro, code, pre, time { font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace; font-variant-numeric: tabular-nums; }
+.micro { font-size: 9px; letter-spacing: .16em; text-transform: uppercase; }
+.panel-grid { background-image: linear-gradient(rgba(55,240,208,.023) 1px, transparent 1px), linear-gradient(90deg, rgba(55,240,208,.023) 1px, transparent 1px); background-size: 32px 32px; }
+.hairline { border: 1px solid var(--line); }
+.status-dot { box-shadow: 0 0 12px currentColor; }
+.animate-in { animation: arrive .28s ease-out both; }
+@keyframes arrive { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; } }
+@media (max-width: 880px) { .desktop-sidebar { display: none !important; } }
