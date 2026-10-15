@@ -15,6 +15,7 @@ clean `npm ci` install, after the last source change.
 | Production build | `npm run build` | pass — Next.js **16.4.1** (Turbopack); `/` and `/_not-found` static, 3 dynamic route handlers |
 | Full chain | `npm run verify` | pass end to end |
 | Browser suite (local) | `npx playwright test` | **3 passed** |
+| Deploy-path pre-flight | `LOSSLAB_BASE_URL=http://127.0.0.1:3399 npx playwright test` against a server started outside Playwright | **3 passed** in 1.5 s; no local server spawned (port 3322 stayed free), so the external-base code path is proven |
 | Refund → safeguard → retest E2E | `npx playwright test` | pass; run ID changes, `$3,120.00` → `$0.00` |
 | Suite/report figures E2E | `npx playwright test` | pass; `$9,696` prevented, `77.96%` reduction |
 | Served build + headers + CSP E2E | `npx playwright test` | pass; 7 headers, 0 CSP violations, 0 console errors |
@@ -99,6 +100,10 @@ After the deploy, verify the public app end to end with the same suite used loca
 ```bash
 LOSSLAB_BASE_URL=https://<project>.vercel.app npx playwright test
 ```
+
+That path is pre-flighted: pointing the suite at an externally-started server already passes 3/3
+without Playwright spawning a local one. The only assertion that cannot run before the deploy is the
+`https:` protocol check, which by design only fires against an `https://` base.
 
 - [ ] Authenticate the Vercel CLI (your browser session; no token is requested or stored here).
 - [ ] Deploy to production and capture the HTTPS URL.
