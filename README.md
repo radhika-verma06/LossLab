@@ -27,7 +27,7 @@ These are target hypotheses, not claimed customers.
 ## Working features
 
 - Three switchable synthetic agent profiles: SkyBridge Airways, Meridian Cloud and AtlasPay.
-- Four persistent dashboard views: Setup, Run, Report and Integrate.
+- Four persistent workspace areas behind a 220px sidebar: Overview, Run tests, Reports and Integrations. Overview is the landing view, so the core demonstration is one click — in fact zero clicks — away.
 - A pure deterministic policy evaluator examining structured action traces.
 - Forty sequenced test events per profile, including real authored violations and passing fixtures.
 - Immutable, deeply frozen canonical `RunResult` consumed by the UI, events, charts, API and export.
@@ -35,7 +35,8 @@ These are target hypotheses, not claimed customers.
 - Guardrail comparison replays the same underlying structured traces with alternate evaluator controls. It only reduces exposure when the reevaluated unsafe actions are intercepted.
 - Integer-cent monthly and annual amounts, documented incident scaling and baseline/prevented/residual reconciliation.
 - Interactive volume sensitivity (0.5×–2×), clickable evidence and downloadable JSON report.
-- A 2D SVG finding map that plots every evaluated violation around the synthetic agent core. Marker colour and position come from the local evaluator result; no WebGL or animation is used.
+- A two-column demonstration workspace: the action timeline on the left shows each proposed action and its evaluated outcome (accepted, duplicate detected, blocked by safeguard); the result card on the right shows attempts, unsafe actions and modeled exposure, and its primary action runs the real remediation engine over the identical trace.
+- Plain-English rule copy per rule identity, so a violation is explained without policy jargon while the underlying rule ID stays visible as evidence.
 - Zod-validated local API and TypeScript SDK facade. No keys, external service calls or database are required for the demo.
 - Supabase-compatible SQL schema and seed example for future production persistence; neither is used by the demo.
 
@@ -53,8 +54,8 @@ These are target hypotheses, not claimed customers.
 
 ```text
                     ┌─────────────────────────────────────────────┐
-                    │ Next.js App Router · four persistent views  │
-                    │ Setup → Run → Report → Integrate             │
+                    │ Next.js App Router · four workspace areas   │
+                    │ Overview → Run tests → Reports → Integrations│
                     └─────────────────────┬───────────────────────┘
                                           │ shared session / immutable RunResult
                                           ▼

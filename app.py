@@ -5,9 +5,10 @@ Provides REST endpoints for:
 - Listing available agent types
 - Running deterministic tests against agent traces
 - Retrieving detailed reports of test runs
+- Serving the main application interface
 """
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, render_template
 from risk_engine import RiskEngine, get_skybridge_airline_refund_scenario, get_saas_discount_scenario, get_fraud_operations_scenario
 import json
 import uuid
@@ -40,6 +41,12 @@ AGENT_TYPES = [
         "scenario": "fraud-ops-demo"
     }
 ]
+
+
+@app.route('/')
+def index():
+    """Serve the main application interface."""
+    return render_template('index.html')
 
 
 @app.route('/api/v1/agents', methods=['GET'])

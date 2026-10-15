@@ -9,13 +9,16 @@ was produced by running the command or flow named beside it.
 |---|---|---|
 | Lint | `npm run lint` | pass, 0 warnings |
 | Types | `npm run typecheck` | pass |
-| Unit tests | `npm test` | 8 files, 33 tests pass |
-| Production build | `npm run build` | pass; `/` = 19.8 kB, 124 kB First Load JS |
+| Unit tests | `npm test` | 8 files, 34 tests pass |
+| Production build | `npm run build` | pass; `/` = 13.3 kB, 117 kB First Load JS |
 | Full chain | `npm run verify` | pass end to end |
 | Judge flow E2E | `npx playwright test` | pass |
-| 8-step refund demo E2E | `npx playwright test` | pass |
+| Refund → safeguard → retest E2E | `npx playwright test` | pass |
+| Safeguard suite E2E | `npx playwright test` (Apply / Clear suite) | pass; full suite `$9,696` prevented, `77.96%` |
 | UI type floor | rendered-DOM audit, 4 screens | 0 text nodes below 10px (was 55–93%) |
 | No canvas / effects | rendered-DOM audit | 0 WebGL canvases, 0 box-shadows, 0 animations |
+| CSS compilation | `tailwind.config.ts` includes `./lib/**` | severity classes survive purge; badges render |
+| Sticky header | 1440 and 390 viewport probes | `headerTop: 0`, 0 horizontal overflow at both widths |
 | CSP clean | browser pass over all 4 screens | 0 `securitypolicyviolation`, 0 page errors, 0 console errors |
 | Security headers | `curl -D -` on `next start` | all 7 headers present |
 | `x-powered-by` | `curl -I` | suppressed |
@@ -26,10 +29,10 @@ was produced by running the command or flow named beside it.
 
 - [ ] `npm install && npm run build && npm run start`, open <http://localhost:3000>.
 - [ ] Rehearse `DEMO_SCRIPT.md` end to end inside five minutes.
-- [ ] Confirm the `DEMO MODE — SYNTHETIC TEST FIXTURES` banner is visible on every screen you show.
-- [ ] Confirm you can complete the eight-step airline-refund flow without narration gaps.
-- [ ] Know the four numbers cold: baseline `$12,437`, idempotency-only residual `$8,789`, full-suite
-      residual `$2,741`, modeled reduction `77.96%`.
+- [ ] Confirm the sidebar `Synthetic demo` indicator is visible on every screen you show.
+- [ ] Confirm you can complete the refund → violation → safeguard → retest flow without narration gaps.
+- [ ] Know the five numbers cold: `$3,120` per-month exposure on the refund case, baseline `$12,437`,
+      idempotency-only residual `$8,789`, full-suite residual `$2,741`, modeled reduction `77.96%`.
 - [ ] Have `SECURITY_FINDINGS.md` open in a second window in case a judge asks about dependencies.
 
 ## 3. Repository

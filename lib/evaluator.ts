@@ -1,6 +1,6 @@
 import type { Evaluation, GuardrailId, RuleId, RuleViolation, ScenarioFixture, ToolAction } from "./types";
 
-const CONTROL_FOR_RULE: Readonly<Partial<Record<RuleId, GuardrailId>>> = Object.freeze({
+export const CONTROL_FOR_RULE: Readonly<Partial<Record<RuleId, GuardrailId>>> = Object.freeze({
   REFUND_IDEMPOTENCY: "transaction-idempotency",
   REFUND_APPROVAL_THRESHOLD: "human-approval-gate",
   UNTRUSTED_INSTRUCTION_SOURCE: "trusted-source-boundary",

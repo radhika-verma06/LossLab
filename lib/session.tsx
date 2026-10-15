@@ -7,7 +7,7 @@ import { runRiskEngine } from "./risk-engine";
 import { replayWithGuardrails } from "./remediation";
 import type { GuardrailId, ProfileId, RemediationResult, RunResult } from "./types";
 
-export type TabId = "setup" | "run" | "report" | "integrate";
+export type TabId = "overview" | "run" | "reports" | "integrations";
 export type RunPhase = "IDLE" | "RUNNING" | "PAUSED" | "COMPLETE";
 interface SessionState {
   profileId: ProfileId;
@@ -30,6 +30,7 @@ type Action =
   | { type: "ADVANCE" }
   | { type: "COMPLETE" }
   | { type: "REPLAY" }
+  | { type: "RERUN" }
   | { type: "RATE"; rate: 1 | 4 }
   | { type: "VOLUME"; value: number }
   | { type: "TOGGLE_GUARDRAIL"; id: GuardrailId }
@@ -42,7 +43,7 @@ function makeResult(profileId: ProfileId, volume: number, guardrails: readonly G
 }
 function initialState(): SessionState {
   return {
-    profileId: "skybridge", activeTab: "setup", result: makeResult("skybridge", 1, []),
+    profileId: "skybridge", activeTab: "overview", result: makeResult("skybridge", 1, []),
     phase: "IDLE", cursor: 0, playbackRate: 1, selectedFindingId: null,
     selectedGuardrails: [], volumeMultiplier: 1, reducedMotion: false,
   };
@@ -64,6 +65,13 @@ function reducer(state: SessionState, action: Action): SessionState {
     }
     case "COMPLETE": return { ...state, cursor: state.result.events.length, phase: "COMPLETE" };
     case "REPLAY": return { ...state, cursor: 0, phase: "RUNNING", selectedFindingId: null };
+    case "RERUN": return {
+      ...state,
+      result: makeResult(state.profileId, state.volumeMultiplier, state.selectedGuardrails),
+      phase: "IDLE",
+      cursor: 0,
+      selectedFindingId: null,
+    };
     case "RATE": return { ...state, playbackRate: action.rate };
     case "VOLUME": {
       const volumeMultiplier = Math.max(0.5, Math.min(2, Math.round(action.value * 100) / 100));
