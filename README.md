@@ -31,7 +31,7 @@ These are target hypotheses, not claimed customers.
 - A pure deterministic policy evaluator examining structured action traces.
 - Forty sequenced test events per profile, including real authored violations and passing fixtures.
 - Immutable, deeply frozen canonical `RunResult` consumed by the UI, events, charts, API and export.
-- Pause/resume, replay, 4× presentation speed and complete-now lifecycle controls. Playback changes timing only; it does not change evaluated results or exposure.
+- A single shared session owns the selected profile, the current result and the selected controls, so every screen always agrees. Moving between areas re-runs nothing and duplicates nothing.
 - Guardrail comparison replays the same underlying structured traces with alternate evaluator controls. It only reduces exposure when the reevaluated unsafe actions are intercepted.
 - Integer-cent monthly and annual amounts, documented incident scaling and baseline/prevented/residual reconciliation.
 - Interactive volume sensitivity (0.5×–2×), clickable evidence and downloadable JSON report.
@@ -44,42 +44,106 @@ These are target hypotheses, not claimed customers.
 
 1. No production agent is connected; conversation text and actions are fixed test fixtures.
 2. Unit impact, affected event incidence, baseline period and guardrail interception are assumptions. They are not empirically calibrated.
-3. The UI, chart, marker and exported JSON say synthetic/demonstration. A result is not an actual loss estimate.
+3. The UI and the exported JSON both say synthetic/demonstration. A result is not an actual loss estimate.
 4. Guardrail replay assumes a selected control intercepts the unsafe action it checks (100% efficacy for that deterministic fixture). No real-world prevention rate is measured.
 5. Each profile has 14 or 8 authored violating fixtures, plus distinct passing fixtures repeated deterministically to fill 40 suite slots. Repeated passes are not additional independent data.
 6. The three supplied exposure schedules reconcile: SkyBridge totals **$12,437**, Meridian totals **$8,920**, and AtlasPay totals **$23,011**. Every case preserves its required integer-cent product. AtlasPay unit economics represent lost contribution from legitimate payments blocked in error—not gross payment volume.
 7. This repository includes the server routes; a static-only hosting platform cannot execute them. Use a server-capable Next.js Node deployment.
+8. The session reducer supports a run lifecycle (start, rate, complete) and an event cursor, and unit tests cover them, but **no screen renders those controls**. Playback is not reachable in the shipped UI, and it was never an engine input.
 
 ## Architecture
 
+### In one sentence
+
+LossLab is a **pure function with a UI on top**: fixtures go in, a rule check and some integer
+arithmetic happen, and one frozen result comes out that every screen reads.
+
+Nothing is interactive in the sense of being unpredictable. There is no model call, no clock and no
+randomness in the path that produces a number.
+
+### What happens when you click something
+
+1. **You pick a profile** — SkyBridge, Meridian or AtlasPay. That bundles 40 authored test fixtures.
+   No request is made and nothing is generated at runtime.
+2. **The engine evaluates all 40.** For each fixture it compares the recorded actions in the trace
+   against that fixture's own written policy, then records which rule was broken, by which action,
+   and what the supporting evidence is.
+3. **Failures get a price.** Every failing fixture carries two stated assumptions: how many affected
+   events happen per month, and what one such event costs. Multiplying them, **in integer cents**,
+   produces that fixture's modeled monthly exposure.
+4. **Everything downstream reads the same object.** The four screens, the JSON export, the SDK and
+   the HTTP routes all render one immutable `RunResult`. None of them recompute, trim or adjust it.
+
+### Where each piece lives
+
+| Layer | File | What it is responsible for |
+|---|---|---|
+| Fixtures | `lib/data.ts` | Frozen synthetic profiles, the 40 traces, the rules and the economics. Authored, never generated. |
+| Evaluation | `lib/evaluator.ts` | A pure check of one trace against one policy. Returns violations, blocked actions and evidence. |
+| Model | `lib/risk-engine.ts` | Runs the evaluator across a profile, does the cent arithmetic and builds the immutable `RunResult`. |
+| Replay | `lib/remediation.ts` | Re-runs the **same** traces with safeguards enabled, then reconciles `baseline = prevented + residual`. |
+| Session | `lib/session.tsx` | Holds the selected profile, the current result and the selected controls, and shares them with every screen. |
+| Screens | `components/**` | Render a result. They format cents and derive display-only ratios (a bar width, a percentage); no screen computes a money amount. |
+| Interfaces | `lib/sdk.ts`, `app/api/v1/**` | The same engine exposed as a typed SDK and three validated HTTP routes. |
+
+### How the pieces connect
+
+The pipeline runs one way, and nothing in it reaches back upstream:
+
 ```text
-                    ┌─────────────────────────────────────────────┐
-                    │ Next.js App Router · four workspace areas   │
-                    │ Overview → Run tests → Reports → Integrations│
-                    └─────────────────────┬───────────────────────┘
-                                          │ shared session / immutable RunResult
-                                          ▼
-  Authored fixtures → structured action traces → pure policy evaluator
-                                                │
-                                 ┌──────────────┴──────────────┐
-                                 ▼                             ▼
-                         policy findings              integer-cent model
-                                 └──────────────┬──────────────┘
-                                                ▼
-                   canonical RunResult → feed / scene / charts / JSON
-                                                │
-                              local SDK and validated HTTP API
-                                                │
-                         future: versioned persistence / worker queue
+  AUTHORED FIXTURES                                    lib/data.ts
+  3 profiles · 40 scenarios · structured action traces
+                        │
+                        ▼
+  PURE EVALUATOR                              lib/evaluator.ts
+  each trace vs. its own written policy
+  → violations, blocked actions, evidence
+                        │
+                        ▼
+  INTEGER-CENT MODEL                          lib/risk-engine.ts
+  affected events/month × unit impact
+  → modeled monthly exposure, in cents
+                        │
+                        ▼
+  ONE IMMUTABLE RunResult
+  ───────────────────────  the only source of truth, read by
+                           Overview · Run tests · Reports · Integrations
+                           the JSON export · the SDK · the /api/v1 routes
 ```
+
+The safeguard loop is the one path that can change a figure:
+
+```text
+  RunResult ──► replayWithGuardrails(result, controls)   lib/remediation.ts
+                     │  re-evaluates the SAME traces, with that control enabled
+                     ▼
+                baseline = prevented + residual
+```
+
+It changes for one reason only: a reevaluated action that used to fail now passes. The trace itself is
+byte-for-byte identical before and after, and the app never pretends the agent proposed something
+different.
+
+### Boundaries the design keeps on purpose
+
+- **Money is computed once, in the engine.** Every amount on screen reaches it through
+  `formatUsd`/`formatUsdExact` from the engine's integer cents. Screens reuse those cents for
+  display-only ratios, but no screen produces or alters an amount.
+- **The evaluator is pure.** It reads only the trace and the policy — no clock, no randomness, no
+  network, no model.
+- **One result object.** `RunResult` is deeply frozen, so no screen can quietly mutate a number.
+- **Replay is a re-evaluation, not a rewrite.** Enabling a control never edits the fixture, and it
+  never pretends the agent proposed something different.
+- **Presentation cannot influence outcomes.** There is no WebGL surface, and no animation, timing or
+  scroll input reaches the engine.
 
 ## Data flow and state
 
 `lib/data.ts` holds frozen synthetic profiles, scenarios, transcripts, economic inputs and structured tool traces. `lib/evaluator.ts` derives violations from trace contents; it does not read a presentation `status` field. `lib/risk-engine.ts` evaluates fixtures, computes deterministic run identity, event sequence, categorized exposure and the immutable `RunResult`.
 
-`lib/session.tsx` owns the selected profile, active tab, one current result, run phase, event cursor, playback rate, selected finding, volume factor and selected remediation controls. Navigating tabs leaves this state alone. The feed cursor reveals already-evaluated `RunResult.events`; it does not append new findings or accumulate exposure a second time. Playback rate and event cursor are not engine inputs.
+`lib/session.tsx` owns the selected profile, the active area, one current result, the volume factor and the selected remediation controls — plus run-lifecycle fields (phase, event cursor, playback rate) that the shipped UI does not render, as noted in the limitations above. Navigating between areas leaves all of this alone. Nothing in it can accumulate exposure twice, because the exposure lives in the immutable `RunResult`, not in the session.
 
-The 3D scene is a client-only visual projection of result/cursor data. Scene colors, particle layout and camera movement never determine policy outcomes, marker identity or financial amounts. The Report screen aggregates `RunResult` and an independently reevaluated remediation result. JSON export serializes those same values and their assumptions.
+No screen does arithmetic. All four areas read the same `RunResult` and present it differently: Overview shows the primary failing scenario as an action timeline plus a result card, Run tests lists all 40 evaluated fixtures with filters, Reports aggregates exposure and the remediation comparison, and Integrations documents the SDK and HTTP contract. Reports also holds an independently reevaluated remediation result; JSON export serializes those same values together with their stated assumptions.
 
 ## Risk-engine methodology
 
