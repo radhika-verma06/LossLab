@@ -1,18 +1,23 @@
 # LossLab — five-minute hackathon demonstration
 
 Every number and control below was read back from the running application, not transcribed from a
-design mock. The automated equivalent is `tests/browser-demo.spec.ts` (two Playwright tests, the
-first of which walks the duplicate-refund narrative end to end).
+design mock. The automated equivalent is `tests/browser-demo.spec.ts` (three Playwright tests, the
+first of which walks the duplicate-refund narrative end to end, the third of which re-checked the
+served build's headers and CSP).
 
 ## Before you start
 
 ```bash
-npm install
+npm ci                              # installs the exact lockfile
 npm run build && npm run start      # http://localhost:3000
 ```
 
 `npm run dev` also works. No credentials, network integration or database are required. No WebGL is
 required. **Keep the `Synthetic demo` indicator in the sidebar in frame for the entire demo.**
+
+The deployed build behaves identically — point the same suite at it with
+`LOSSLAB_BASE_URL=https://<project>.vercel.app npx playwright test`, and record the demo from
+whichever URL you are submitting.
 
 ## 0:00–0:35 — Problem
 
@@ -85,6 +90,11 @@ No navigation is required; this is the landing view.
 
 **Say:** "These figures are synthetic model outputs — not booked losses and not promised savings.
 100% interception is an explicit fixture assumption, not measured prevention."
+
+If asked *what changed after the fix*: the **Original risk · Critical** badge and the
+**Original run `$3,120.00` at risk** column describe the pre-safeguard evaluation; the
+**Mitigated replay passed** chip and the **Mitigated replay `$0.00` at risk** column are the result of
+re-evaluating the same trace. The Critical rating is never presented as the state of the fixed run.
 
 ## 2:30–3:20 — The rest of the suite
 
@@ -163,3 +173,5 @@ frame.
 | "We integrate with LangChain" | "The trace contract is adapter-ready; no live adapter ships in this demo" |
 | "Guaranteed 78% risk reduction" | "77.96% under an explicit, stated modeling assumption" |
 | "$3,120 of losses prevented" | "$3,120 of modeled monthly exposure prevented in this synthetic fixture" |
+| "The app has no vulnerabilities" | "The production dependency tree audits clean — `npm audit --omit=dev` reports 0. Build/test tooling still reports 17 findings, and none of that ships." |
+| "$3,120 was the cost of the test" | "$3,120 is modeled monthly exposure for the whole failure pattern — 24 affected events a month at `$130.00` each" |

@@ -200,10 +200,10 @@ Risks include competition from AI testing/observability tools, integration diver
 
 ## Local installation
 
-Requires Node.js 18.17+ (Node 20 LTS recommended) and npm.
+Requires Node.js **20.9+** (Next.js 16's minimum) and npm. Developed and verified on Node 22.23.2.
 
 ```sh
-npm install
+npm ci
 npm run dev
 ```
 
@@ -220,11 +220,21 @@ npm run build
 npm run verify
 ```
 
-Tests cover profile/fixture totals, cent multiplication, rule IDs, passing cases, idempotency, approval gates, instruction trust boundaries, currencies and discounts, guardrail replay/reconciliation, determinism, volume scaling, playback invariance, SDK/Zod contracts, local API routes and shared session behavior. A Playwright browser run is recommended before a recorded submission.
+Tests cover profile/fixture totals, cent multiplication, rule IDs, passing cases, idempotency, approval gates, instruction trust boundaries, currencies and discounts, guardrail replay/reconciliation, determinism, volume scaling, playback invariance, SDK/Zod contracts, local API routes and shared session behavior. Three Playwright browser tests cover the refund → safeguard → retest narrative, the report figures, and the served build's security headers and CSP:
+
+```sh
+npx playwright test
+# or, against the deployed build:
+LOSSLAB_BASE_URL=https://<project>.vercel.app npx playwright test
+```
 
 ## Deployment
 
-Deploy to a server-capable Next.js host/runtime (Node server or compatible managed Next platform) and run `npm run build` then `npm start`. API routes are server functions. Do not use GitHub Pages, static export, or any deployment that drops route handlers. The local demonstration itself needs no production integration values. This project pins Next.js 14.2.35 as requested; `npm audit` reports published advisories for the required major version, including denial-of-service, SSRF, request-smuggling and XSS conditions. Do not expose the hackathon demo as a public production service until the framework is moved to a patched compatible release or protected by a deployment policy. Re-run `npm audit` when choosing a deployment target; upgrading across Next majors requires a deliberate compatibility migration.
+Deploy to a server-capable Next.js host/runtime (Node server or compatible managed Next platform) and run `npm run build` then `npm start`. API routes are server functions. Do not use GitHub Pages, static export, or any deployment that drops route handlers. The local demonstration itself needs no production integration values.
+
+This release runs **Next.js 16.4.1** on React 18.3.1, with `npm audit --omit=dev` reporting **0 vulnerabilities**. It previously pinned Next.js 14.2.35, and no patch existed on that major — every advisory fix was a major-version upgrade, so the move was made deliberately and verified with the full suite (`npm run verify`, three Playwright tests, a clean `npm ci`, and a browser pass over all four screens). The upgrade branch is `next-16-security-upgrade` and `main` keeps the previous known-good Next 14 build. The audit history, the reachability analysis for each advisory group and the exact changes required are in `SECURITY_FINDINGS.md`, and the deployment handoff is in `SUBMISSION_CHECKLIST.md`.
+
+Vercel needs no `vercel.json` and no environment variables; Next.js App Router is auto-detected and the three route handlers deploy as serverless functions.
 
 ## Future integrations
 

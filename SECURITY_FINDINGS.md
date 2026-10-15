@@ -13,18 +13,22 @@ npm audit                 # full tree including build/test tooling
 
 ## 1. What the audit reports
 
-`npm audit --omit=dev` prints **four entries**. This is a count of vulnerable *packages*, not
-advisories — the `next` entry alone aggregates 23 separate advisories.
+**Current state of the shipping build: `npm audit --omit=dev` reports `found 0 vulnerabilities`.**
+The upgrade described in §4 is applied on branch `next-16-security-upgrade`.
 
-| # | Package | Installed | Severity | Advisories | Fix path |
-|---|---------|-----------|----------|------------|----------|
-| 1 | `next` | 14.2.35 | **critical** | 23 | only via `next@16.4.1` (breaking) |
-| 2 | `postcss` (nested at `node_modules/next/node_modules/postcss`) | 8.4.31 | high | 4 | only via `next@16.4.1` (breaking) |
-| 3 | `playwright` (transitive) | 1.49.1 | high | 1 | `npm audit fix` (non-breaking) |
-| 4 | `@playwright/test` | 1.49.1 | high | via `playwright` | `npm audit fix` (non-breaking) |
+For the record, the starting position was **four entries** — a count of vulnerable *packages*, not
+advisories; the `next` entry alone aggregated 23 separate advisories.
 
-Before this work: `4 vulnerabilities (3 high, 1 critical)`.
-After applying the non-breaking fix: `2 vulnerabilities (1 high, 1 critical)`.
+| # | Package | Was | Severity | Advisories | Fix path | Now |
+|---|---------|-----|----------|------------|----------|-----|
+| 1 | `next` | 14.2.35 | **critical** | 23 | only via `next@16.4.1` (breaking) | `16.4.1` |
+| 2 | `postcss` (nested at `node_modules/next/node_modules/postcss`) | 8.4.31 | high | 4 | only via `next@16.4.1` (breaking) | `8.5.23` |
+| 3 | `playwright` (transitive) | 1.49.1 | high | 1 | `npm audit fix` (non-breaking) | `1.64.1` |
+| 4 | `@playwright/test` | 1.49.1 | high | via `playwright` | `npm audit fix` (non-breaking) | `1.64.1` |
+
+Starting point: `4 vulnerabilities (3 high, 1 critical)`.
+After the non-breaking Playwright bump: `2 vulnerabilities (1 high, 1 critical)`.
+After the `next@16.4.1` upgrade: **`0 vulnerabilities`**.
 
 **Why Playwright appears under `--omit=dev`.** `@playwright/test` is declared by `next` as an
 *optional peer dependency* (`peerDependenciesMeta["@playwright/test"].optional = true`), so npm
@@ -114,25 +118,45 @@ Facts that determine the strategy:
   not have to move in the same step. That keeps the upgrade surface smaller than it looks.
 - Playwright needs `>=1.55.1` (current release is `1.64.1`).
 
-**Applied now (non-breaking, verified).** `npm audit fix` bumped `@playwright/test` and
-`playwright` to 1.64.1. The browser suite was re-run afterwards and both end-to-end tests pass
-(new Chromium binaries were required and installed). This removed two high findings and touched
-no production dependency.
+**Applied (non-breaking, verified).** `npm audit fix` bumped `@playwright/test` and `playwright`
+to 1.64.1. This removed two high findings and touched no production dependency.
 
-**Recommended before the public URL is used for anything beyond the demo.**
-Upgrade to `next@16.4.1` and re-run `npm run verify` plus `npx playwright test`. This is the
-single change that clears both remaining findings. It is a major-version jump, so it is
-deliberately **not** applied as part of release preparation — it deserves its own verified
-change, and `npm audit fix --force` was not run.
+**Applied on `next-16-security-upgrade` (major version, verified).** `next` was moved to `16.4.1`,
+which also pins `postcss@8.5.23`. This clears every remaining production finding:
 
-**Interim position if the upgrade cannot happen before submission.** The two criticals are
-condition-gated (Windows host, AVIF image optimization) and neither condition exists here. The
-residual exposure is denial-of-service class on RSC request parsing. Compensating controls
-already applied in this release (section 5) do not remove that risk.
+```bash
+npm install next@16.4.1 --save-exact
+npm install --save-dev --save-exact eslint@9.39.1 eslint-config-next@16.4.1
+npm ci && npm run verify && npx playwright test
+```
+
+The upgrade required exactly two production-side changes, both mechanical:
+
+- Next.js 16 passes dynamic route params as a promise, so `GET` in
+  `app/api/v1/reports/[runId]/route.ts` awaits `params` (and its unit test passes a resolved promise).
+- `eslint-config-next@16` requires ESLint 9, so `.eslintrc.json` was replaced by a flat
+  `eslint.config.mjs` using the preset's native flat export. No lint suppression was added; the two
+  warnings the new preset surfaced on config files were fixed by naming their default exports.
+
+`npm audit fix --force` was **not** run. Next.js emits a deprecation warning for React 18, which
+Next 16 still supports; React is deliberately left at 18.3.1 so the security fix and a framework
+runtime change are not entangled. Moving to React 19 is the next dependency step and is tracked in
+§7 of `SUBMISSION_CHECKLIST.md`.
+
+**Post-upgrade verification** (`next-16-security-upgrade`): clean `npm ci`, `npm run verify`,
+3/3 Playwright tests, all 7 security headers present on `next start`, `/_next/image` still returning
+no optimized payload, and a browser pass over all 4 screens with 0 CSP violations and 0 console
+errors.
+
+**Why the previous deferral was safe, kept for the record.** Before the upgrade, the two criticals
+were condition-gated (Windows host, AVIF image optimization) and neither condition existed here; the
+residual exposure was denial-of-service class on RSC request parsing. That reasoning is no longer
+load-bearing now that the upgrade has shipped.
 
 ## 5. Compensating controls applied in this release
 
-Set in `next.config.mjs` and verified with `curl -D -` against a production `next start` server:
+Set in `next.config.mjs`. Re-verified with `curl -D -` against the **Next.js 16.4.1** production
+`next start` server, and asserted on every run by the served-build Playwright test:
 
 | Header | Value |
 |--------|-------|
@@ -145,14 +169,16 @@ Set in `next.config.mjs` and verified with `curl -D -` against a production `nex
 | `Cross-Origin-Opener-Policy` | `same-origin` |
 
 Also applied: `images.unoptimized: true` (the optimizer surface is unused) and
-`poweredByHeader: false`. A full browser pass over Setup → Run → Report → Integrate reports
-zero `securitypolicyviolation` events, zero page errors and zero console errors, with inline
+`poweredByHeader: false`. A full browser pass over Overview → Run tests → Reports → Integrations
+reports zero `securitypolicyviolation` events, zero page errors and zero console errors, with inline
 styles and self-hosted fonts still applying.
 
 ## 6. Build- and test-tooling findings (not shipped)
 
-`npm audit` without `--omit=dev` reports **19 vulnerabilities (6 moderate, 10 high, 3 critical)**.
+`npm audit` without `--omit=dev` reports **17 vulnerabilities (6 moderate, 9 high, 2 critical)**.
 These are confined to build and test tooling that never reaches the deployed artifact:
-`vitest`/`tinypool` (critical), `@next/eslint-plugin-next`/`glob`, `tailwindcss`/`chokidar`/
-`braces`/`micromatch`, and `vite`. They are recorded here so the production number is not
-mistaken for the whole picture, and so the dev-tooling debt is visible rather than ignored.
+`vitest`/`tinypool` (critical), `@vitest/mocker`/`vite`/`vite-node`/`esbuild`/`tsx`,
+`tailwindcss`/`chokidar`/`braces`/`micromatch`/`fast-glob`/`glob`/`@next/eslint-plugin-next`, and
+the root `postcss@8.4.49` used only by the Tailwind build step (the `next`-nested postcss is now
+clean). They are recorded here so the production number is not mistaken for the whole picture, and
+so the dev-tooling debt is visible rather than ignored.

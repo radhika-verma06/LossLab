@@ -2,9 +2,11 @@
 
 > **Historical document.** This records the original build plan for release preparation and is
 > kept for provenance. It is superseded by the shipped code: the Three.js / react-three-fiber
-> visualization and its dependencies were removed, and the Run screen now renders a 2D SVG finding
-> map. See `README.md` for the current feature list and `SECURITY_FINDINGS.md` for the current
-> dependency set.
+> visualization and its dependencies were removed in favour of a flat two-column workspace, the
+> Run screen became a filterable trace list, and the framework moved from Next.js 14.2.35 to
+> 16.4.1 as a security upgrade. See `README.md` for the current feature list,
+> `SECURITY_FINDINGS.md` for the current dependency set and `SUBMISSION_CHECKLIST.md` for what
+> was verified in this release.
 
 **Goal:** Build a locally functional, auditable AI-agent risk-engineering MVP with deterministic synthetic runs, guardrail replay, report, API, and cinematic visualization.
 

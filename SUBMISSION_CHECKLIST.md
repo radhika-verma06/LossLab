@@ -1,106 +1,116 @@
 # LossLab — final submission checklist
 
-Status recorded on 16 October 2026. Nothing in the "Verified" section is aspirational: each line
-was produced by running the command or flow named beside it.
+Status recorded on 16 October 2026, on branch `next-16-security-upgrade`. Nothing in the "Verified"
+section is aspirational: each row was produced by running the command or flow named beside it, on a
+clean `npm ci` install, after the last source change.
 
 ## 1. Verified in this release
 
 | Check | Command / flow | Result |
 |---|---|---|
-| Lint | `npm run lint` | pass, 0 warnings |
+| Clean install | `rm -rf node_modules && npm ci` | pass; no invalid and no missing packages |
+| Lint | `npm run lint` | pass, 0 warnings (ESLint 9.39.1 flat config, `eslint-config-next@16.4.1`) |
 | Types | `npm run typecheck` | pass |
-| Unit tests | `npm test` | 8 files, 34 tests pass |
-| Production build | `npm run build` | pass; `/` = 13.3 kB, 117 kB First Load JS |
+| Unit tests | `npm test` | 8 files, **34 tests** pass |
+| Production build | `npm run build` | pass — Next.js **16.4.1** (Turbopack); `/` and `/_not-found` static, 3 dynamic route handlers |
 | Full chain | `npm run verify` | pass end to end |
-| Judge flow E2E | `npx playwright test` | pass |
-| Refund → safeguard → retest E2E | `npx playwright test` | pass |
-| Safeguard suite E2E | `npx playwright test` (Apply / Clear suite) | pass; full suite `$9,696` prevented, `77.96%` |
-| UI type floor | rendered-DOM audit, 4 screens | 0 text nodes below 10px (was 55–93%) |
-| No canvas / effects | rendered-DOM audit | 0 WebGL canvases, 0 box-shadows, 0 animations |
-| CSS compilation | `tailwind.config.ts` includes `./lib/**` | severity classes survive purge; badges render |
-| Sticky header | 1440 and 390 viewport probes | `headerTop: 0`, 0 horizontal overflow at both widths |
-| CSP clean | browser pass over all 4 screens | 0 `securitypolicyviolation`, 0 page errors, 0 console errors |
+| Browser suite (local) | `npx playwright test` | **3 passed** |
+| Refund → safeguard → retest E2E | `npx playwright test` | pass; run ID changes, `$3,120.00` → `$0.00` |
+| Suite/report figures E2E | `npx playwright test` | pass; `$9,696` prevented, `77.96%` reduction |
+| Served build + headers + CSP E2E | `npx playwright test` | pass; 7 headers, 0 CSP violations, 0 console errors |
+| Production audit | `npm audit --omit=dev` | **0 vulnerabilities** (was 2: 1 critical, 1 high) |
+| Full-tree audit | `npm audit` | 17 findings (6 moderate, 9 high, 2 critical) — build/test tooling only, never shipped |
 | Security headers | `curl -D -` on `next start` | all 7 headers present |
-| `x-powered-by` | `curl -I` | suppressed |
-| Image optimizer | probe `/_next/image` | no optimized payload returned |
-| Production audit | `npm audit --omit=dev` | 2 findings, down from 4 |
+| `x-powered-by` | `curl -D -` | absent |
+| Image optimizer | probe `/_next/image` | 404, no optimized payload |
+| Initial JS payload | 7 chunks served from `next start`, gzip-transfer measured | 654 kB decoded / **199 kB transferred** |
+| UI type floor | rendered-DOM audit, 4 screens | minimum 11 px; 0 text nodes below 10 px |
+| No WebGL | rendered-DOM audit | 0 `<canvas>` elements |
+| Motion | rendered-DOM audit | transitions present, all disabled under `prefers-reduced-motion` |
+| Main-thread health | long-task observer, 4 screens | 0 long tasks |
+| Flask/`5050` independence | source + built-artifact scan (§2) | no dependency of any kind |
 
-## 2. Demonstration readiness
+## 2. No dependency on localhost:5050 or the Flask server (confirmed)
+
+| Evidence | Finding |
+|---|---|
+| `grep` for `5050`, `localhost:5050`, `127.0.0.1:5050` across `app/`, `components/`, `lib/`, `public/`, `next.config.mjs`, `package.json` | 0 matches |
+| Same search inside the built artifact (`.next/server`, `.next/static`) | 0 matches; the only `5050` byte-strings anywhere are hex hashes in build caches |
+| `flask` case-insensitive in the built artifact | only the lucide-react `flask-conical` icon used for the "Run tests" nav item |
+| `public/` contents | **0 files** — the app ships no static assets that could reference anything |
+| Outbound calls in `app/` and `lib/` (`fetch`, `http`, `axios`, `WebSocket`) | none — the app never makes a network request |
+| The 3 route handlers | import only `next/server` and `@/lib/*`; every figure is computed in-process |
+| `app.py` | the Flask draft itself; it is not imported, and does not start on this machine (`ModuleNotFoundError: No module named 'flask'`) |
+| `.vercelignore` | now excludes `app.py`, `risk_engine.py`, `templates/`, `LossLab/`, `tests/`, `docs/`, `supabase/` from the upload |
+
+**Conclusion:** the deployed application is a self-contained Next.js build with no runtime dependency
+on port 5050, on the Flask server, or on any external host.
+
+## 3. Demonstration readiness
 
 - [ ] `npm install && npm run build && npm run start`, open <http://localhost:3000>.
 - [ ] Rehearse `DEMO_SCRIPT.md` end to end inside five minutes.
 - [ ] Confirm the sidebar `Synthetic demo` indicator is visible on every screen you show.
 - [ ] Confirm you can complete the refund → violation → safeguard → retest flow without narration gaps.
-- [ ] Know the five numbers cold: `$3,120` per-month exposure on the refund case, baseline `$12,437`,
-      idempotency-only residual `$8,789`, full-suite residual `$2,741`, modeled reduction `77.96%`.
+- [ ] Know the five numbers cold: `$3,120` **modeled monthly exposure** on the refund case, baseline
+      `$12,437`, idempotency-only residual `$8,789`, full-suite residual `$2,741`, modeled reduction
+      `77.96%`.
 - [ ] Have `SECURITY_FINDINGS.md` open in a second window in case a judge asks about dependencies.
 
-## 3. Repository
+## 4. Repository
 
-- [x] Git initialised with a baseline snapshot commit.
-- [x] `node_modules/`, `.next/`, `.next-playwright/`, `venv/`, `__pycache__/`, `coverage/`,
-      `test-results/`, `playwright-report/`, `*.tsbuildinfo`, `*.log`, `.DS_Store` and `.env*`
-      all excluded — verified with `git ls-files` and `git status --ignored`.
-- [x] No secrets are tracked (searched the index for env/key/credential patterns).
-- [x] Commit author set repository-locally to `radhika-verma06` only (no global Git config change).
-- [ ] Decide the destination remote (`https://github.com/radhika-verma06/...`) and push. Pushing
-      is deliberately left to you.
+- [x] Git initialised; `main` holds the previous known-good Next 14.2.35 release, untouched.
+- [x] The upgraded release lives on branch `next-16-security-upgrade`.
+- [x] `node_modules/`, `.next/`, `.next-playwright/`, `venv/`, `coverage/`, `test-results/`,
+      `playwright-report/`, `.shots/`, `*.tsbuildinfo`, `*.log`, `.DS_Store` and `.env*` are all
+      excluded — verified with `git ls-files` and `git status --ignored`.
+- [x] No secrets are tracked.
+- [x] Commit author set repository-locally to `radhika-verma06` only.
+- [ ] **Decide how to publish the branch.** Either push `next-16-security-upgrade` and make it the
+      default branch, or fast-forward `main` onto it (the Next 14 commit stays reachable as
+      `0406b20`/`c2aa826` either way). Pushing is deliberately left to you.
 
 ### Optional cleanup before submitting
 
-These files are in the snapshot but are an obsolete earlier draft and are **not part of the
-Next.js application**: `app.py`, `risk_engine.py`, `templates/index.html`, and the `LossLab/`
-directory. `app.py` does not even start (`ModuleNotFoundError: No module named 'flask'`, recorded
-in the now-ignored `app.log`). Leaving them in the repository is harmless but may confuse a judge
-reading the source tree. They are excluded from the deployment by `.vercelignore`.
-
-## 4. Security sign-off
-
-- [x] Production audit run and every finding identified with installed version, advisory range and
-      exploit condition.
-- [x] Crucially: the two criticals are **condition-gated** — Windows-hosted servers
-      (CVE-2026-75604) and AVIF image optimization (GHSA-2xp9-vwfh-vxw4). Neither condition exists
-      in this app.
-- [x] Non-breaking fix applied and verified: Playwright 1.49.1 → 1.64.1, browser suite re-run green.
-- [ ] **Decision required before a long-lived public URL:** upgrade `next` to `16.4.1`, which is
-      the only change that clears both remaining findings (`next` and its pinned `postcss@8.4.31`).
-      There is no patch that stays on Next 14 — `14.2.35` is the newest 14.x release.
-      `npm audit fix --force` was **not** run.
-- [x] Impact of deferring documented: the residual exposure is denial-of-service class on React
-      Server Component request parsing.
+`app.py`, `risk_engine.py` and `templates/index.html` are an obsolete earlier draft. They are **not
+part of the Next.js application**, are excluded from the deployment, and `app.py` does not start.
+Leaving them in the repository is harmless but may confuse a judge reading the source tree — deleting
+them is a one-command change if you prefer.
 
 ## 5. Deployment
 
-Local production readiness is verified. A public HTTPS URL is **not yet produced** — no hosting
-CLI or credentials exist on this machine.
+Everything needed is in place; the only step that requires you is authentication.
 
 ```bash
-# Vercel CLI is reachable without a global install:
-npx vercel@latest --version        # verified: 64.2.0
-npx vercel@latest login
-npx vercel@latest --prod           # deploy from this directory
+cd /Users/radhikaverma/LossLab
+npx vercel@latest login          # interactive, browser-based — run this yourself
+npx vercel@latest link           # first run only: create or select the project
+npx vercel@latest --prod         # deploy from this directory
 ```
 
-`.vercelignore` excludes vendored, generated and local-only paths from the upload. Next.js App
-Router is auto-detected; no `vercel.json` is required, and the three API route handlers deploy as
-serverless functions. The app needs **no environment variables** — there is no database, no auth
+Verified for the upgrade: the Vercel CLI resolves to **64.2.0** without a global install, a clean
+`npm ci` installs the lockfile exactly, and `next build` succeeds from that lockfile. Next.js App
+Router is auto-detected; **no `vercel.json` is required**, the three route handlers deploy as
+serverless functions, and the app needs **no environment variables** — there is no database, no auth
 provider and no third-party API.
 
-- [ ] Authenticate the Vercel CLI (provide `VERCEL_TOKEN` or complete the browser login).
-- [ ] Deploy to production and capture the HTTPS URL.
-- [ ] Re-run the browser flow against the deployed URL — verify the same eight steps, the security
-      headers on the deployed host, and `GET /api/v1/agents` returning three profiles.
-- [ ] Only then describe the project as deployed.
+After the deploy, verify the public app end to end with the same suite used locally:
 
-**Do not treat this project as deployment-ready until the security decision in section 4 is made
-and the deployed URL has passed the browser flow.**
+```bash
+LOSSLAB_BASE_URL=https://<project>.vercel.app npx playwright test
+```
+
+- [ ] Authenticate the Vercel CLI (your browser session; no token is requested or stored here).
+- [ ] Deploy to production and capture the HTTPS URL.
+- [ ] Run the command above against the deployed URL — same 3 tests, now over HTTPS.
+- [ ] Only then describe the project as deployed.
 
 ## 6. Submission artefacts to hand in
 
-- [ ] Source repository (with the commit history from this session).
+- [ ] Source repository (branch `next-16-security-upgrade`).
 - [ ] Deployed HTTPS URL.
 - [ ] `DEMO_SCRIPT.md` — recording plan and spoken script.
-- [ ] `SECURITY_FINDINGS.md` — dependency audit and patch strategy.
+- [ ] `SECURITY_FINDINGS.md` — dependency audit and patch record.
 - [ ] `README.md` — product and architecture overview.
 - [ ] Five-minute screen recording, recorded from the production build.
 
@@ -112,5 +122,7 @@ and the deployed URL has passed the browser flow.**
 - The `/api/v1` routes are an in-memory demo API; runs are not persisted and are lost on restart.
 - Pricing tiers are illustrative and unvalidated; no commercial agreements exist.
 - No live agent adapter, webhook, queue worker, identity provider or CI gate ships in this demo.
-- `npm audit` on the full tree (including build/test tooling) reports 19 findings; none of those
-  packages reach the deployed artifact and they are listed in `SECURITY_FINDINGS.md` §6.
+- React is still **18.3.1**. Next.js 16 supports it but deprecates it and will remove the support in
+  Next 17; the move to React 19 is the next dependency step and was not needed to clear the audit.
+- `npm audit` on the full tree (including build/test tooling) reports 17 findings. None of those
+  packages reach the deployed artifact.

@@ -474,7 +474,7 @@ GET /api/v1/reports/:run_id</code></pre>
             exposureItem.innerHTML = `
                 <div class="result-icon" style="background: var(--error-color); color: white;">!</div>
                 <div class="result-text">
-                    <div class="result-label">Total exposure in this test</div>
+                    <div class="result-label">Total modeled monthly exposure</div>
                     <div class="result-value tabular-nums">$${(state.runWithoutGuardrails.report.total_exposure_cents / 100).toFixed(2)}</div>
                 </div>
             ';
