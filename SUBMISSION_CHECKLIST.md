@@ -67,9 +67,12 @@ on port 5050, on the Flask server, or on any external host.
       excluded — verified with `git ls-files` and `git status --ignored`.
 - [x] No secrets are tracked.
 - [x] Commit author set repository-locally to `radhika-verma06` only.
-- [ ] **Decide how to publish the branch.** Either push `next-16-security-upgrade` and make it the
-      default branch, or fast-forward `main` onto it (the Next 14 commit stays reachable as
-      `0406b20`/`c2aa826` either way). Pushing is deliberately left to you.
+- [x] Published to <https://github.com/radhika-verma06/LossLab> (**public**) with
+      `next-16-security-upgrade` as the **default branch**, so the repo opens on the shipped release.
+      `main` is pushed alongside it as the preserved Next 14 fallback.
+- [x] The published repo was re-verified the way a judge will read it: cloned fresh, then
+      `npm ci && npm run verify && npx playwright test` — 34 unit tests, 3/3 browser tests,
+      `npm audit --omit=dev` → 0 vulnerabilities. No untracked file is needed to build it.
 
 ### Optional cleanup before submitting
 
@@ -129,7 +132,8 @@ could not run earlier is the `https:` protocol check, which by design only fires
 
 ## 6. Submission artefacts to hand in
 
-- [ ] Source repository (branch `next-16-security-upgrade`).
+- [x] Source repository — <https://github.com/radhika-verma06/LossLab> (default branch
+      `next-16-security-upgrade`).
 - [x] Deployed HTTPS URL — <https://losslab-xi.vercel.app>.
 - [ ] `DEMO_SCRIPT.md` — recording plan and spoken script.
 - [ ] `SECURITY_FINDINGS.md` — dependency audit and patch record.
