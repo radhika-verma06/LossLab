@@ -66,9 +66,11 @@ All of these are in the `next` 14.2.35 tree or its pinned `postcss`.
 (insecure RSC deserialization, `<15.0.8`), `GHSA-q4gf-8mx6-v5v3` (`<15.5.15`),
 `GHSA-8h8q-6873-q5fj` (`<15.5.16`), `GHSA-m99w-x7hq-7vfj` (Server Actions, `<15.5.21`),
 `GHSA-4c39-4ccg-62r3` (unbounded Server Action payload, Edge runtime). These target the request
-parsing path that any App Router deployment serves. **This is the one genuine residual risk**:
-the app does not use Server Actions, but RSC request handling is on the public surface, so a
-public URL can be made to consume CPU/memory.
+parsing path that any App Router deployment serves. **This was the one genuine residual risk while
+Next 14.2.35 was installed**: the app does not use Server Actions, but RSC request handling is on
+the public surface, so a public URL could be made to consume CPU/memory. It is closed by the
+`next@16.4.1` upgrade in §4 — these advisories are among the 23 attached to the 14.x `next` entry,
+and none of them apply once the patched version is installed.
 
 **Server-side request forgery** — `GHSA-c4j6-fc7j-m34r` (WebSocket upgrades, `<15.5.16`),
 `GHSA-p9j2-gv94-2wf4` (rewrites, `<15.5.21`), `GHSA-89xv-2m56-2m9x` (Server Actions on custom
