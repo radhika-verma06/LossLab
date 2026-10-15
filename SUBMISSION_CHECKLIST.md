@@ -147,7 +147,11 @@ could not run earlier is the `https:` protocol check, which by design only fires
 - All inputs, evaluations, event rates, unit economics and modeled exposure are **synthetic
   fixtures** — not observed customer losses, live telemetry, or a forecast.
 - 100% interception for enabled guardrails is an explicit assumption, not measured efficacy.
-- The `/api/v1` routes are an in-memory demo API; runs are not persisted and are lost on restart.
+- The `/api/v1` routes are an in-memory demo API; runs are not persisted. On a cold instance the
+  report route can only recover a run it can recompute — the three seeded profiles at their default
+  seed 241. In testing against the deployed host, repeated lookups of both a default-seed and a
+  custom-seed run (`seed 9999`) all returned 200, which means the instance stayed warm and the
+  failure mode could not be reproduced; it is inferred from the code rather than observed.
 - Pricing tiers are illustrative and unvalidated; no commercial agreements exist.
 - No live agent adapter, webhook, queue worker, identity provider or CI gate ships in this demo.
 - React is still **18.3.1**. Next.js 16 supports it but deprecates it and will remove the support in
